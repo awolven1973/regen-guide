@@ -1,6 +1,6 @@
 # Regen Guide
 
-A college-level, hyperlinked guide to **Regen**, a generative programming environment built around Common Lisp, generative objects, declarative attributes, and composition.
+A college-level, hyperlinked guide to **Regen**, a declarative, knowledge-based generative programming environment built around Common Lisp, generative objects, attributes, composition, and design intent.
 
 ## Read the guide
 
@@ -29,6 +29,8 @@ Distinguish implemented Regen behavior from prospective features. Parameter/cons
 6. Reference systems and geometry
 7. Consistency, error recovery, and prospective transactions
 8. Protocols and external implementations
+9. Declarative modeling, design intent as a first-class concept, and knowledge-based engineering
+10. Knowledge representation, ontologies, and schemas (distinguishing related concepts without treating them as a strict subset hierarchy)
 
 ## Structure
 
