@@ -66,8 +66,8 @@
 
 (defobject long-part (dimensioned-part))
 
-(let ((part (make-instance 'long-part)))
-  (send part length)) ; =&gt; 100</code></pre>
+(let ((instance (make-instance 'long-part)))
+  (send instance length)) ; =&gt; 100</code></pre>
 <p>Inheritance is one way to share definitions; <a href="../glossary.html#object-protocol">protocol conformance</a> is another way to share semantic expectations without requiring common class ancestry. We will examine both as the guide develops.</p></section>
 <section id="3-7"><h2>3.7 What These Examples Establish</h2>
 <p>The small examples demonstrate definitions with inputs, expressions for ordinary attributes, nested components, class inheritance, instantiation, and attribute references. Together they show how a generative object is more than a record of independently stored values: it can contain an executable, declarative model of its properties and parts.</p>
