@@ -10,6 +10,7 @@ Open [index.html](index.html) locally, or enable GitHub Pages from the repositor
 - [Chapter 1: Generative Objects](chapters/01-generative-objects.html)
 - [Chapter 2: Attribute Kinds and Object Protocols](chapters/02-attribute-kinds-and-object-protocols.html)
 - [Chapter 3: Defining Generative Objects](chapters/03-defining-generative-objects.html)
+- [Chapter 4: Spatial Organization](chapters/04-spatial-organization.html)
 - [Terminology index](glossary.html)
 
 The HTML is static and has no dependencies or build steps. Relative links work locally or under a GitHub Pages project path.
@@ -25,13 +26,14 @@ Distinguish implemented Regen behavior from prospective features. Parameter/cons
 1. Generative Objects
 2. Attribute Kinds and Object Protocols
 3. Defining Generative Objects with `defobject` (introductory examples checked against the Adhoc test suite; runtime confirmation pending)
-4. Attribute evaluation, explicit assignments, and invalidation
-5. Object composition and dependency graphs
-6. Reference systems and geometry
-7. Consistency, error recovery, and prospective transactions
-8. Protocols and external implementations
-9. Declarative modeling, design intent as a first-class concept, and knowledge-based engineering
-10. Knowledge representation, ontologies, and schemas (distinguishing related concepts without treating them as a strict subset hierarchy)
+4. Spatial Organization with `node-mixin` (examples grounded in adhoc-scene-graph and 3d-math; runtime confirmation pending)
+5. Attribute evaluation, explicit assignments, and invalidation
+6. Object composition and dependency graphs
+7. Advanced reference systems and geometry
+8. Consistency, error recovery, and prospective transactions
+9. Protocols and external implementations
+10. Declarative modeling, design intent as a first-class concept, and knowledge-based engineering
+11. Knowledge representation, ontologies, and schemas (distinguishing related concepts without treating them as a strict subset hierarchy)
 
 ## Structure
 
