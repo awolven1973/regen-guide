@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="description" content="Regen Guide Chapter 3: verified defobject examples in Adhoc"><title>Chapter 3: Defining Generative Objects · Regen Guide</title><link rel="stylesheet" href="../assets/site.css"></head><body>
+<a class="skip" href="#content">Skip to content</a>
+<div class="layout"><aside class="sidebar" aria-label="Guide navigation"><a class="brand" href="../index.html">Regen Guide</a><p class="subtitle">Generative programming with Common Lisp</p><nav class="links"><div class="nav-heading">Contents</div><a href="../index.html">Overview</a><a href="../chapters/01-generative-objects.html">1 · Generative Objects</a><a href="../chapters/02-attribute-kinds-and-object-protocols.html">2 · Attribute Kinds and Object Protocols</a><a href="../chapters/03-defining-generative-objects.html" aria-current="page">3 · Defining Generative Objects</a><a href="../glossary.html">Terminology index</a><div class="nav-heading">Reference</div><a href="../glossary.html#declarative-programming">Declarative</a><a href="../glossary.html#design-intent">Design intent</a><a href="../glossary.html#attribute-kind">Attribute kinds</a></nav></aside>
+<main id="content"><header class="eyebrow">Chapter 3 · First concrete examples</header><h1>Defining Generative Objects</h1>
+<p class="lead">This chapter introduces actual <code>defobject</code> syntax, using forms documented in the Adhoc implementation's test suite. A generative object declares properties and relationships; the system evaluates those declarations as needed.</p>
+<div class="note"><strong>Source status.</strong> The forms and operations below are based on <a href="https://github.com/awolven1973/adhoc/blob/master/tests/tests.lisp">Adhoc's tests</a> and <a href="https://github.com/awolven1973/adhoc/blob/master/src/adhoc.lisp">its implementation</a>. The examples have not been executed in a live Regen image as part of writing this chapter. Their meaning and portability should be confirmed against the version used in Regen. Use these as introductory patterns, not a complete language reference.</div>
+<nav class="card" aria-label="On this page"><strong>In this chapter</strong><ol class="toc"><li><a href="#3-1">3.1 The Shape of a defobject Definition</a></li><li><a href="#3-2">3.2 A First Object with Inputs</a></li><li><a href="#3-3">3.3 Ordinary Attributes and Declarative Computation</a></li><li><a href="#3-4">3.4 Reading Generative Attributes</a></li><li><a href="#3-5">3.5 Generative Composition</a></li><li><a href="#3-6">3.6 Inheritance and Shared Semantics</a></li><li><a href="#3-7">3.7 What These Examples Establish</a></li><li><a href="#3-8">3.8 Summary</a></li></ol></nav>
+<section id="3-1"><h2>3.1 The Shape of a <code>defobject</code> Definition</h2>
+<p>A <a href="../glossary.html#defobject"><code>defobject</code></a> form names a generative CLOS class, identifies its direct superclasses, and declares attributes. The first examples use the three <em>essential</em> <a href="../glossary.html#attribute-kind">attribute kinds</a> discussed in Chapter 2. They are not the only possible attribute kinds.</p>
+<pre class="code"><code>(defobject name (superclass ...)
+  :inputs (...)
+  :attributes (...)
+  :components (...))</code></pre>
+<p>This is a structural illustration rather than a runnable definition: <code>name</code>, <code>superclass</code>, and the ellipses stand for declarations. The empty superclass list <code>()</code> is valid. A definition need not use all three sections.</p>
+<p>The declarative character is important: the expressions attached to attributes establish relationships in the model, not a script of instructions for a caller to invoke in a particular sequence.</p></section>
+<section id="3-2"><h2>3.2 A First Object with Inputs</h2>
+<p>The following is a small, standalone example of a generative object describing a rectangular plate through two configurable dimensions.</p>
+<pre class="code"><code>(defobject rectangular-plate ()
+  :inputs
+  ((length 10)
+   (width 5)))
+
+(let ((plate (make-instance 'rectangular-plate)))
+  (send plate length)) ; =&gt; 10</code></pre>
+<p><a href="../glossary.html#input">Inputs</a> establish values from which other properties can be derived. In this form, both input declarations provide expressions supplying initial values. The test suite establishes the same basic pattern with single-letter names and <code>make-instance</code>.</p>
+<p>These dimensions are intentionally abstract numbers; units, dimensions, and geometric representations are subjects for later chapters.</p></section>
+<section id="3-3"><h2>3.3 Ordinary Attributes and Declarative Computation</h2>
+<p>An <a href="../glossary.html#ordinary-attribute">ordinary attribute</a> can express a computed relationship. Here the plate's area is <em>declared in terms of</em> its dimensions.</p>
+<pre class="code"><code>(defobject rectangular-plate ()
+  :inputs
+  ((length 10)
+   (width 5))
+  :attributes
+  ((area (* (the length) (the width)))))
+
+(let ((plate (make-instance 'rectangular-plate)))
+  (send plate area)) ; =&gt; 50</code></pre>
+<p>The <code>area</code> expression encodes part of the model's <a href="../glossary.html#design-intent">design intent</a>: area is determined by length and width, rather than maintained manually as an unrelated number. The <code>(the length)</code> and <code>(the width)</code> forms use Adhoc's attribute-reference syntax.</p>
+<p>The expression still executes Common Lisp computation. <a href="../glossary.html#declarative-programming">Declarative programming</a> does not prohibit arithmetic or procedural code; it changes which relationships the programmer is responsible for specifying.</p></section>
+<section id="3-4"><h2>3.4 Reading Generative Attributes</h2>
+<p>The tests demonstrate two useful reading styles:</p>
+<pre class="code"><code>(send plate area)
+
+(let ((self plate))
+  (the area))</code></pre>
+<p><code>send</code> reads a property through an explicit object reference. The <code>the</code> expression is used in contexts where the distinguished variable <code>self</code> identifies the current generative object. Both forms appear in the Adhoc tests. Although <code>the</code> is also a name in standard Common Lisp, the attribute-reference form here is the Adhoc/Regen facility, not a standard Common Lisp type declaration.</p>
+<p>How references participate in dependency recording, evaluation, assignment, and invalidation is deferred to the detailed attribute-evaluation chapter.</p></section>
+<section id="3-5"><h2>3.5 Generative Composition</h2>
+<p>Objects may declaratively specify constituent generative objects. This example introduces a mechanical part and an assembly that contains it:</p>
+<pre class="code"><code>(defobject shaft ()
+  :inputs ((length 100)))
+
+(defobject shaft-assembly ()
+  :components
+  ((main-shaft :type 'shaft)))
+
+(let ((assembly (make-instance 'shaft-assembly)))
+  (send assembly main-shaft length)) ; =&gt; 100</code></pre>
+<p>The <code>main-shaft</code> component is declared with a <code>:type</code> expression. The nested form of <code>send</code> follows the component relationship to obtain the shaft's length. Adhoc tests include the corresponding <code>:components ((name :type 'class))</code> and chained <code>send</code> syntax.</p>
+<p><a href="../glossary.html#generative-composition">Generative composition</a> differs from inheritance: <code>shaft-assembly</code> is not a subclass of <code>shaft</code>; it <em>contains</em> a shaft. The instance hierarchy established by components is separate from the directed graph of attribute dependencies.</p></section>
+<section id="3-6"><h2>3.6 Inheritance and Shared Semantics</h2>
+<p>Generative classes also participate in ordinary CLOS inheritance. A derived class can reuse a parent's declared input:</p>
+<pre class="code"><code>(defobject dimensioned-part ()
+  :inputs ((length 100)))
+
+(defobject long-part (dimensioned-part))
+
+(let ((part (make-instance 'long-part)))
+  (send part length)) ; =&gt; 100</code></pre>
+<p>Inheritance is one way to share definitions; <a href="../glossary.html#object-protocol">protocol conformance</a> is another way to share semantic expectations without requiring common class ancestry. We will examine both as the guide develops.</p></section>
+<section id="3-7"><h2>3.7 What These Examples Establish</h2>
+<p>The small examples demonstrate definitions with inputs, expressions for ordinary attributes, nested components, class inheritance, instantiation, and attribute references. Together they show how a generative object is more than a record of independently stored values: it can contain an executable, declarative model of its properties and parts.</p>
+<p>They do <strong>not</strong> yet establish general rules for explicit assignment, computed-value caching, dependency invalidation, error recovery, transactional consistency, or constraint solving. Those require dedicated treatment and verification. In particular, generalized constraint solving and transactional rollback must not be presented as implemented features merely because they are architectural goals.</p>
+<p>Future chapters will expand the relationship among declarative specification, first-class design intent, knowledge-based engineering, and ontology-driven protocols.</p></section>
+<section id="3-8"><h2>3.8 Summary</h2><p><code>defobject</code> specifies generative classes through named attributes and components. Inputs provide configurable values; ordinary attributes can declare computed relationships; components declare constituent objects. The defining benefit is not a shorter way to issue construction commands, but a means of encoding and reusing the relationships that govern a design.</p></section>
+<nav class="bottomnav" aria-label="Chapter navigation"><a href="02-attribute-kinds-and-object-protocols.html">← Chapter 2</a><a href="../glossary.html">Terminology index →</a></nav><footer>Regen Guide · Examples checked against Adhoc source patterns; runtime confirmation remains desirable.</footer></main></div></body></html>
