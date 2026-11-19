@@ -5,7 +5,7 @@
 <main id="content"><header class="eyebrow">Chapter 3 · First concrete examples</header><h1>Defining Generative Objects</h1>
 <p class="lead">This chapter introduces actual <code>defobject</code> syntax, using forms documented in the Adhoc implementation's test suite. A generative object declares properties and relationships; the system evaluates those declarations as needed.</p>
 <div class="note"><strong>Source status.</strong> The forms and operations below are based on <a href="https://github.com/awolven1973/adhoc/blob/master/tests/tests.lisp">Adhoc's tests</a> and <a href="https://github.com/awolven1973/adhoc/blob/master/src/adhoc.lisp">its implementation</a>. The examples have not been executed in a live Regen image as part of writing this chapter. Their meaning and portability should be confirmed against the version used in Regen. Use these as introductory patterns, not a complete language reference.</div>
-<nav class="card" aria-label="On this page"><strong>In this chapter</strong><ol class="toc"><li><a href="#3-1">3.1 The Shape of a defobject Definition</a></li><li><a href="#3-2">3.2 A First Object with Inputs</a></li><li><a href="#3-3">3.3 Ordinary Attributes and Declarative Computation</a></li><li><a href="#3-4">3.4 Reading Generative Attributes</a></li><li><a href="#3-5">3.5 Composition</a></li><li><a href="#3-5-1">3.5.1 Generative Composition</a></li><li><a href="#3-6">3.6 Inheritance and Shared Semantics</a></li><li><a href="#3-7">3.7 What These Examples Establish</a></li><li><a href="#3-8">3.8 Summary</a></li></ol></nav>
+<nav class="card" aria-label="On this page"><strong>In this chapter</strong><ol class="toc"><li><a href="#3-1">3.1 The Shape of a defobject Definition</a></li><li><a href="#3-2">3.2 A First Object with Inputs</a></li><li><a href="#3-3">3.3 Ordinary Attributes and Declarative Computation</a></li><li><a href="#3-4">3.4 Reading Generative Attributes and Reference Chaining</a></li><li><a href="#3-5">3.5 Composition</a></li><li><a href="#3-5-1">3.5.1 Generative Composition</a></li><li><a href="#3-6">3.6 Inheritance and Shared Semantics</a></li><li><a href="#3-7">3.7 What These Examples Establish</a></li><li><a href="#3-8">3.8 Summary</a></li></ol></nav>
 <section id="3-1"><h2>3.1 The Shape of a <code>defobject</code> Definition</h2>
 <p>A <a href="../glossary.html#defobject"><code>defobject</code></a> form names a generative CLOS class, identifies its direct superclasses, and declares attributes. The first examples use the three <em>essential</em> <a href="../glossary.html#attribute-kind">attribute kinds</a> discussed in Chapter 2. They are not the only possible attribute kinds.</p>
 <pre class="code"><code>(defobject name (superclass ...)
@@ -38,14 +38,29 @@
   (send plate area)) ; =&gt; 50</code></pre>
 <p>The <code>area</code> expression encodes part of the model's <a href="../glossary.html#design-intent">design intent</a>: area is determined by length and width, rather than maintained manually as an unrelated number. The <code>(the length)</code> and <code>(the width)</code> forms use Adhoc's attribute-reference syntax.</p>
 <p>The expression still executes Common Lisp computation. <a href="../glossary.html#declarative-programming">Declarative programming</a> does not prohibit arithmetic or procedural code; it changes which relationships the programmer is responsible for specifying.</p></section>
-<section id="3-4"><h2>3.4 Reading Generative Attributes</h2>
-<p>The tests demonstrate two useful reading styles:</p>
+<section id="3-4"><h2>3.4 Reading Generative Attributes and Reference Chaining</h2>
+<p>Adhoc/Regen provides attribute-reference forms for reading the properties of generative objects. The two fundamental forms differ in how the starting object is supplied:</p>
 <pre class="code"><code>(send plate area)
 
 (let ((self plate))
   (the area))</code></pre>
-<p><code>send</code> reads a property through an explicit object reference. The <code>the</code> expression is used in contexts where the distinguished variable <code>self</code> identifies the current generative object. Both forms appear in the Adhoc tests. Although <code>the</code> is also a name in standard Common Lisp, the attribute-reference form here is the Adhoc/Regen facility, not a standard Common Lisp type declaration.</p>
-<p>How references participate in dependency recording, evaluation, assignment, and invalidation is deferred to the detailed attribute-evaluation chapter.</p></section>
+<p><code>send</code> starts with an explicit object expression, such as <code>plate</code>. The Adhoc <code>the</code> form starts with the generative object identified by the distinguished lexical variable <code>self</code>. An attribute body ordinarily has a current object, making <code>the</code> particularly convenient there. This is an Adhoc/Regen attribute-reference form, distinct from the standard Common Lisp <code>the</code> special operator used for type declarations.</p>
+<h3 id="3-4-1">3.4.1 Reference Chaining</h3>
+<p>An attribute reference need not stop after one name. <strong>Reference chaining</strong> follows a sequence of named attributes, using the value obtained at one step as the object for the next step. This is especially useful when a generative object contains other generative objects.</p>
+<p>For example, once an instance of the <code>shaft-assembly</code> defined in §3.5 has been created, its shaft's length can be read directly:</p>
+<pre class="code"><code>(send assembly main-shaft length)
+
+(let ((self assembly))
+  (the main-shaft length))</code></pre>
+<p>Both expressions begin with the assembly. The first name, <code>main-shaft</code>, identifies a component whose value is a shaft object; the second name, <code>length</code>, identifies an input of that shaft. The result is the shaft's length, not the component object itself.</p>
+<p>Compare the expressions with their two-step equivalent:</p>
+<pre class="code"><code>(let ((shaft-object (send assembly main-shaft)))
+  (send shaft-object length))</code></pre>
+<p>Chaining avoids naming intermediate objects when all that matters is the property at the end of the path. A longer chain can traverse multiple nested components. Adhoc's tests include expressions such as <code>(send assembly-object child grandchild attribute)</code>, demonstrating that a chain is not limited to two names.</p>
+<h3 id="3-4-2">3.4.2 What a Chain Means</h3>
+<p>Each name in a reference chain is interpreted relative to the object reached by the preceding step. A chain therefore expresses <em>navigation through the generative object model</em>, not a single flat name or a Common Lisp package-qualified symbol. The intermediate steps must yield objects on which the next property can meaningfully be requested.</p>
+<p>Chaining is also different from inheritance. Inheritance determines which attributes an object can possess through its class; reference chaining navigates from one object to another through attribute values, frequently through components. Later chapters will discuss cases in which attributes other than components supply object references.</p>
+<p>Reference expressions can appear inside other attribute computations and provided-input expressions, making them a basic notation for expressing relationships across an assembly. The detailed rules for evaluation, dependency tracking, assignment, and invalidation belong in the subsequent chapters.</p></section>
 <section id="3-5"><h2>3.5 Composition</h2>
 <p>Objects may specify constituent generative objects as components. The following example introduces a shaft and an assembly that contains it:</p>
 <pre class="code"><code>(defobject shaft ()
