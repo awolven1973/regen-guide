@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="description" content="Regen Guide Chapter 4: spatial composition, node-mixin, quaternion rotations, and coordinate transformations"><title>Chapter 4: Spatial Organization · Regen Guide</title><link rel="stylesheet" href="../assets/site.css"></head><body>
+<a class="skip" href="#content">Skip to content</a><div class="layout"><aside class="sidebar" aria-label="Guide navigation"><a class="brand" href="../index.html">Regen Guide</a><p class="subtitle">Generative programming with Common Lisp</p><nav class="links"><div class="nav-heading">Contents</div><a href="../index.html">Overview</a><a href="01-generative-objects.html">1 · Generative Objects</a><a href="02-attribute-kinds-and-object-protocols.html">2 · Attribute Kinds and Object Protocols</a><a href="03-defining-generative-objects.html">3 · Defining Generative Objects</a><a href="04-spatial-organization.html" aria-current="page">4 · Spatial Organization</a><a href="../glossary.html">Terminology index</a></nav></aside>
+<main id="content"><header class="eyebrow">Chapter 4 · A spatial application of generative objects</header><h1>Spatial Organization with <code>node-mixin</code></h1>
+<p class="lead">Generative objects do not have to be geometric. When they represent parts of a spatial assembly, however, a coordinate system makes their relationships much more expressive. Adhoc's scene-graph library supplies this functionality through <code>node-mixin</code>.</p>
+<div class="note"><strong>Source note.</strong> The class name <code>node-mixin</code>, the <code>origin</code> and <code>rotation</code> inputs, and the transformation macros come from <a href="https://github.com/awolven1973/adhoc-scene-graph/blob/main/scene-graph.lisp">adhoc-scene-graph</a>. The quaternion function <code>qrotation</code> comes from <a href="https://github.com/awolven1973/3d-math/blob/master/quaternion-methods.lisp">3d-math</a>. The illustrative classes below have not been executed in a Regen image. Package imports or qualification are assumed: <code>defobject</code> from Adhoc, <code>node-mixin</code> and <code>globally</code> from the scene-graph package, and <code>vec3</code> and <code>qrotation</code> from 3d-math.</div>
+<nav class="card" aria-label="On this page"><strong>In this chapter</strong><ol class="toc"><li><a href="#4-1">4.1 From Generative Objects to Spatial Nodes</a></li><li><a href="#4-2">4.2 Origin: Position in a Parent Frame</a></li><li><a href="#4-3">4.3 Rotation: Orientation with Quaternions</a></li><li><a href="#4-4">4.4 Spatial Generative Composition</a></li><li><a href="#4-5">4.5 From Local to Global Coordinates</a></li><li><a href="#4-6">4.6 A Small Spatial Assembly</a></li><li><a href="#4-7">4.7 What Comes Later</a></li></ol></nav>
+<section id="4-1"><h2>4.1 From Generative Objects to Spatial Nodes</h2>
+<p>The source calls the class <code>node-mixin</code>; when discussing its role we may simply call an instance a <em>node</em>. It is a generative superclass that supplies spatial inputs and computed transformations. It does not replace the general generative object model: ordinary non-spatial objects still use <code>defobject</code> without inheriting from it.</p>
+<pre class="code"><code>(defobject positioned-shaft (node-mixin)
+  :inputs ((length 100)))</code></pre>
+<p>Here <code>positioned-shaft</code> inherits spatial behavior from <code>node-mixin</code> while declaring its own <code>length</code> input. This is class inheritance, not component composition; an assembly can subsequently contain an instance of this class.</p>
+<p>The implementation also has graphics-related properties, but those are not needed to understand the spatial model.</p></section>
+<section id="4-2"><h2>4.2 Origin: Position in a Parent Frame</h2>
+<p>The <code>origin</code> input describes the position of a node's local coordinate origin relative to its containing node's coordinate system. In the source, its initial expression is <code>(vec3 0 0 0)</code>. That position is a three-dimensional vector, rather than three unrelated scalar inputs.</p>
+<pre class="code"><code>(defobject positioned-shaft (node-mixin)
+  :inputs ((length 100)))
+
+(defobject shaft-support (node-mixin)
+  :inputs ((shaft-offset 25))
+  :components
+  ((main-shaft :type 'positioned-shaft
+               origin (vec3 (the shaft-offset) 0 0))))</code></pre>
+<p>The provided-input expression <code>origin (vec3 (the shaft-offset) 0 0)</code> positions the child shaft at an offset determined by the assembly's <code>shaft-offset</code> input. It is another example of <a href="03-defining-generative-objects.html#3-5-1">generative composition</a>: the containing object specifies a relationship that determines the child object's input.</p>
+<p>Here and below the vector constructors and angle expressions are shown in the same general style as the libraries' source; the examples use an assumed package context rather than a complete application initialization sequence.</p></section>
+<section id="4-3"><h2>4.3 Rotation: Orientation with Quaternions</h2>
+<p>Position alone is insufficient for a spatial assembly. The <code>rotation</code> input expresses the orientation of the child's local coordinate system relative to the parent. Its default in <code>node-mixin</code> is the identity quaternion, <code>(quat 0 0 0 1)</code>.</p>
+<p><code>3dm:qrotation</code> constructs a quaternion from a rotation axis and angle. For example, a quarter-turn about the Z axis can be expressed as:</p>
+<pre class="code"><code>(qrotation (vec3 0 0 1) (/ pi 2))</code></pre>
+<p>The first argument is the axis vector; the second is the rotation angle in radians. The mathematical value <code>(/ pi 2)</code> represents 90 degrees. This example introduces quaternion construction without requiring the reader to manipulate quaternion components directly.</p>
+<p>In the scene graph, a <code>rotation-matrix</code> attribute derives a transformation matrix from the quaternion, and the node's local <code>matrix</code> combines rotation and translation. Thus a rotation input participates in the node's spatial calculations.</p></section>
+<section id="4-4"><h2>4.4 Spatial Generative Composition</h2>
+<p>Provided-input expressions for both <code>origin</code> and <code>rotation</code> allow the containing assembly to drive a child's placement declaratively:</p>
+<pre class="code"><code>(defobject shaft-support (node-mixin)
+  :inputs ((shaft-offset 25)
+           (shaft-angle (/ pi 2)))
+  :components
+  ((main-shaft :type 'positioned-shaft
+               origin (vec3 (the shaft-offset) 0 0)
+               rotation (qrotation (vec3 0 0 1)
+                                   (the shaft-angle)))))</code></pre>
+<p>Unlike an imperative call that moves or rotates an already-built object, this specification expresses how the placement is determined. The shaft's origin depends on <code>shaft-offset</code>; its orientation depends on <code>shaft-angle</code>. Those relationships are part of the assembly's model and can be evaluated by the generative attribute system.</p></section>
+<section id="4-5"><h2>4.5 From Local to Global Coordinates</h2>
+<p>A point expressed in a node's local coordinate system is not necessarily the same numerical point in global coordinates. The scene-graph library offers the <code>globally</code> macro, which uses the current node <code>self</code> as the source frame.</p>
+<pre class="code"><code>(let ((self shaft-object))
+  (globally (vec3 0 0 0)))</code></pre>
+<p>In this example, <code>shaft-object</code> denotes an actual spatial node instance. <code>(vec3 0 0 0)</code> is the origin of that node's local frame. <code>globally</code> requests the corresponding coordinate in the global reference frame.</p>
+<pre class="code"><code>;; Expansion of the globally macro:
+(transform-to-global-coordinate (vec3 0 0 0) self)</code></pre>
+<p>The displayed macro expansion follows the definition in <code>adhoc-scene-graph</code>. The underlying coordinate-conversion functions use the node's transformation data and its relationship to the containing hierarchy. We defer the matrix mathematics and conversion between arbitrary frames to a later chapter.</p>
+<p><strong>Important distinction:</strong> “global” is a coordinate frame, not necessarily identical to the local coordinate system of the root object. The scene-graph API explicitly distinguishes those notions.</p></section>
+<section id="4-6"><h2>4.6 A Small Spatial Assembly</h2>
+<p>We now have all the essential pieces: a spatial node superclass, a component specification, an input-driven offset, a quaternion-defined orientation, and a means of requesting a local point's global coordinate.</p>
+<p>To use the model, instantiate <code>shaft-support</code>, obtain its child using reference chaining, and evaluate a local coordinate with that child bound to <code>self</code>:</p>
+<pre class="code"><code>(let* ((assembly (make-instance 'shaft-support))
+       (shaft-object (send assembly main-shaft))
+       (self shaft-object))
+  (globally (vec3 0 0 0)))</code></pre>
+<p>This shows the roles of both systems: generative reference chaining locates the child object, while the spatial transformation interface relates one coordinate system to another. It deliberately does not depend on predicting a numeric result from unexecuted examples.</p></section>
+<section id="4-7"><h2>4.7 What Comes Later</h2>
+<p>This chapter introduces spatial organization as an application of generative composition, not as a complete geometry course. Later topics include transformations between any two node frames, the <code>as</code> and <code>locally</code> macros, quaternion operations, geometry defined in local frames, and dependency/invalidation behavior when placements change.</p>
+<p>As in earlier chapters, this is a conceptual progression: the object model and its declarative attribute semantics come first; spatial representation is a powerful but optional capability built on top of them.</p></section>
+<nav class="bottomnav" aria-label="Chapter navigation"><a href="03-defining-generative-objects.html">← Chapter 3</a><a href="../glossary.html">Terminology index →</a></nav><footer>Regen Guide · Spatial examples grounded in Adhoc scene-graph and 3d-math source.</footer></main></div></body></html>
