@@ -48,7 +48,21 @@
 <pre class="code"><code>;; Expansion of the globally macro:
 (transform-to-global-coordinate (vec3 0 0 0) self)</code></pre>
 <p>The displayed macro expansion follows the definition in <code>adhoc-scene-graph</code>. The underlying coordinate-conversion functions use the node's transformation data and its relationship to the containing hierarchy. We defer the matrix mathematics and conversion between arbitrary frames to a later chapter.</p>
-<p><strong>Important distinction:</strong> “global” is a coordinate frame, not necessarily identical to the local coordinate system of the root object. The scene-graph API explicitly distinguishes those notions.</p></section>
+<p><strong>Important distinction:</strong> “global” is a coordinate frame, not necessarily identical to the local coordinate system of the root object. The scene-graph API explicitly distinguishes those notions.</p>
+<h3 id="4-5-1">4.5.1 Reading an Attribute Versus Transforming Its Coordinate</h3>
+<p>The scene-graph library also provides <code>locally</code>, which combines <a href="03-defining-generative-objects.html#3-4-1">reference chaining</a> with coordinate conversion. Its argument sequence identifies an object through a reference chain and ends with the name of a coordinate-valued attribute. The result is expressed in the coordinate system of the current <code>self</code>.</p>
+<p>Consider the <code>shaft-support</code> example above, where the component's <code>origin</code> input was supplied as <code>(vec3 (the shaft-offset) 0 0)</code>:</p>
+<pre class="code"><code>(let* ((assembly (make-instance 'shaft-support))
+       (self assembly))
+  (the main-shaft origin))
+;; =&gt; (VEC3 25.0 0.0 0.0)</code></pre>
+<p>Here <code>the</code> simply reads the child node's <code>origin</code> attribute. In contrast, <code>locally</code> requests a coordinate transformation rather than a raw attribute value:</p>
+<pre class="code"><code>(let* ((assembly (make-instance 'shaft-support))
+       (self assembly))
+  (locally main-shaft origin))
+;; =&gt; (VEC3 0.0 0.0 0.0)  ; result in the supplied interactive example</code></pre>
+<p>The distinction is important even though both expressions mention <code>main-shaft origin</code>. The first performs attribute reference chaining; the second follows that reference and converts the resulting vector from the referenced node's frame into <code>self</code>'s frame. In particular, <code>locally</code> treats the value of the final attribute as a coordinate <em>in the child's frame</em>. Since a node's <code>origin</code> input itself describes a position relative to its parent, care is needed when choosing which frame a coordinate-valued attribute represents. The two results above illustrate the reported interactive behavior; they should not be treated as an assertion that all coordinate-valued attributes are stored in the same frame.</p>
+<p>In the source, <code>locally</code> obtains the referenced node and its final attribute value, then calls <code>transform-coordinate-from-to</code> with that node as the source and <code>self</code> as the destination. This is why <code>locally</code> is a transformation macro, not merely another spelling of <code>the</code>.</p></section>
 <section id="4-6"><h2>4.6 A Small Spatial Assembly</h2>
 <p>We now have all the essential pieces: a spatial node superclass, a component specification, an input-driven offset, a quaternion-defined orientation, and a means of requesting a local point's global coordinate.</p>
 <p>To use the model, instantiate <code>shaft-support</code>, obtain its child using reference chaining, and evaluate a local coordinate with that child bound to <code>self</code>:</p>
