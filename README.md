@@ -9,6 +9,7 @@ Open [index.html](index.html) locally, or enable GitHub Pages from the repositor
 - [Start / contents](index.html)
 - [Chapter 1: Generative Objects](chapters/01-generative-objects.html)
 - [Chapter 2: Attribute Kinds and Object Protocols](chapters/02-attribute-kinds-and-object-protocols.html)
+- [Chapter 3: Defining Generative Objects](chapters/03-defining-generative-objects.html)
 - [Terminology index](glossary.html)
 
 The HTML is static and has no dependencies or build steps. Relative links work locally or under a GitHub Pages project path.
@@ -23,7 +24,7 @@ Distinguish implemented Regen behavior from prospective features. Parameter/cons
 
 1. Generative Objects
 2. Attribute Kinds and Object Protocols
-3. Defining Objects with `defobject` (examples pending verification against source)
+3. Defining Generative Objects with `defobject` (introductory examples checked against the Adhoc test suite; runtime confirmation pending)
 4. Attribute evaluation, explicit assignments, and invalidation
 5. Object composition and dependency graphs
 6. Reference systems and geometry
