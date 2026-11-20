@@ -30,53 +30,56 @@
 <p>The first argument is the axis vector; the second is the rotation angle in radians. The mathematical value <code>(/ pi 2)</code> represents 90 degrees. This example introduces quaternion construction without requiring the reader to manipulate quaternion components directly.</p>
 <p>In the scene graph, a <code>rotation-matrix</code> attribute derives a transformation matrix from the quaternion, and the node's local <code>matrix</code> combines rotation and translation. Thus a rotation input participates in the node's spatial calculations.</p></section>
 <section id="4-4"><h2>4.4 Spatial Generative Composition</h2>
-<p>Provided-input expressions for both <code>origin</code> and <code>rotation</code> allow the containing assembly to drive a child's placement declaratively:</p>
+<p>A component's <code>origin</code> can be driven by a provided-input expression, so its placement depends on the assembly's declared dimensions. The parent node can also be rotated, carrying all of its constituent objects with it:</p>
 <pre class="code"><code>(defobject shaft-support (node-mixin)
-  :inputs ((shaft-offset 25)
-           (shaft-angle (/ pi 2)))
+  :inputs ((shaft-offset 25))
   :components
   ((main-shaft :type 'positioned-shaft
-               origin (vec3 (the shaft-offset) 0 0)
-               rotation (qrotation (vec3 0 0 1)
-                                   (the shaft-angle)))))</code></pre>
-<p>Unlike an imperative call that moves or rotates an already-built object, this specification expresses how the placement is determined. The shaft's origin depends on <code>shaft-offset</code>; its orientation depends on <code>shaft-angle</code>. Those relationships are part of the assembly's model and can be evaluated by the generative attribute system.</p></section>
+               origin (vec3 (the shaft-offset) 0 0))))</code></pre>
+<p>This model places the shaft's origin at <code>(vec3 25 0 0)</code> in the <em>shaft-support's local coordinate system</em>. It does not rotate the shaft by itself; the child inherits the identity rotation supplied by <code>node-mixin</code>. The provided-input expression establishes a relationship between the support's offset and the shaft's placement. In the next section we rotate the <em>support</em>, demonstrating how the same child origin acquires a different position in global coordinates.</p></section>
 <section id="4-5"><h2>4.5 From Local to Global Coordinates</h2>
-<p>A point expressed in a node's local coordinate system is not necessarily the same numerical point in global coordinates. The scene-graph library offers the <code>globally</code> macro, which uses the current node <code>self</code> as the source frame.</p>
-<pre class="code"><code>(let ((self shaft-object))
-  (globally (vec3 0 0 0)))</code></pre>
-<p>In this example, <code>shaft-object</code> denotes an actual spatial node instance. <code>(vec3 0 0 0)</code> is the origin of that node's local frame. <code>globally</code> requests the corresponding coordinate in the global reference frame. <strong>A rotation about a node's own origin does not move that origin.</strong> To see the effect of the quarter-turn defined in §4.4, transform a <em>nonzero</em> local coordinate instead:</p>
-<pre class="code"><code>(let* ((assembly (make-instance 'shaft-support))
-       (shaft-object (send assembly main-shaft))
-       (self shaft-object))
-  (globally (vec3 1 0 0)))</code></pre>
-<p>The shaft's quarter-turn about the Z axis changes the direction of the local X-axis, so this point's global position reflects <em>both</em> the supplied origin and the supplied rotation. By contrast, the local point <code>(vec3 0 0 0)</code> is affected by translation but not by rotation about that origin. Numerical results depend on the enclosing node's placement and on the transformation conventions of the running implementation.</p>
-<pre class="code"><code>;; Expansion of the globally macro:
-(transform-to-global-coordinate (vec3 0 0 0) self)</code></pre>
-<p>The displayed macro expansion follows the definition in <code>adhoc-scene-graph</code>. The underlying coordinate-conversion functions use the node's transformation data and its relationship to the containing hierarchy. We defer the matrix mathematics and conversion between arbitrary frames to a later chapter.</p>
-<p><strong>Important distinction:</strong> “global” is a coordinate frame, not necessarily identical to the local coordinate system of the root object. The scene-graph API explicitly distinguishes those notions.</p>
-<h3 id="4-5-1">4.5.1 Reading an Attribute Versus Transforming Its Coordinate</h3>
-<p><strong>Package note:</strong> In these examples, <code>locally</code> denotes <code>adhoc-scene-graph:locally</code> (the same symbol sometimes written <code>adhoc-scene-graph::locally</code>), <em>not</em> the standard Common Lisp special operator <code>cl:locally</code>. The scene-graph package shadows <code>cl:locally</code>; the examples assume its own exported macro has been imported into the current package.</p>
-<p>The scene-graph library also provides <code>locally</code>, which combines <a href="03-defining-generative-objects.html#3-4-1">reference chaining</a> with coordinate conversion. Its argument sequence identifies an object through a reference chain and ends with the name of a coordinate-valued attribute. The result is expressed in the coordinate system of the current <code>self</code>.</p>
-<p>Consider the <code>shaft-support</code> example above, where the component's <code>origin</code> input is supplied as <code>(vec3 (the shaft-offset) 0 0)</code> and its <code>rotation</code> is a quarter-turn about Z:</p>
-<pre class="code"><code>(let* ((assembly (make-instance 'shaft-support))
+<p>A node's <code>origin</code> is expressed relative to its parent's coordinate system. To see how the <em>origin of the shaft</em> changes under rotation, we must rotate the <em>shaft-support</em>: rotating the shaft about its own origin changes its orientation, not the position of that origin.</p>
+<p>We create a support rotated by a quarter-turn about the Z axis, and ask for its shaft's origin in the support's own frame:</p>
+<pre class="code"><code>(let* ((assembly (make-instance 'shaft-support
+                                'rotation
+                                (qrotation (vec3 0 0 1) (/ pi 2))))
        (self assembly))
   (the main-shaft origin))
 ;; =&gt; (VEC3 25.0 0.0 0.0)</code></pre>
-<p>Here <code>the</code> simply reads the child node's <code>origin</code> attribute. In contrast, <code>locally</code> requests a coordinate transformation rather than a raw attribute value:</p>
+<p>The result is still the input value <code>(25, 0, 0)</code> because <code>the</code> reads the shaft's origin as expressed in its parent frame. The support's own rotation does not change that stored relative placement.</p>
+<p>The scene-graph macro <code>globally</code> converts a coordinate from the current node's frame into the global frame. With <code>self</code> bound to the <em>support</em>, the shaft's parent-relative origin is a suitable point to transform:</p>
+<pre class="code"><code>(let* ((assembly (make-instance 'shaft-support
+                                'rotation
+                                (qrotation (vec3 0 0 1) (/ pi 2))))
+       (self assembly))
+  (globally (the main-shaft origin)))</code></pre>
+<p>This time the quarter-turn matters: the shaft's origin is displaced along the support's local X-axis, which has been rotated relative to the global frame. If the support's global origin is at zero, a conventional positive quarter-turn about Z places the shaft's origin at approximately <code>(0, 25, 0)</code> in global coordinates. The precise numerical result should be confirmed in the running implementation, whose transformation conventions govern the sign and direction.</p>
+<pre class="code"><code>;; Expansion of the globally macro:
+(transform-to-global-coordinate
+  (the main-shaft origin)
+  self)</code></pre>
+<p>This use of <code>globally</code> differs from transforming a point in the <em>child's</em> local frame: <code>(the main-shaft origin)</code> is already a coordinate expressed in the parent frame, so here <code>self</code> is the parent. The source defines <code>globally</code> in terms of <code>transform-to-global-coordinate</code>. A global frame is not necessarily identical to the root object's local coordinate system.</p>
+<h3 id="4-5-1">4.5.1 Reading an Attribute Versus Transforming Its Coordinate</h3>
+<p><strong>Package note:</strong> In these examples, <code>locally</code> denotes <code>adhoc-scene-graph:locally</code> (also writable <code>adhoc-scene-graph::locally</code>), <em>not</em> the standard Common Lisp special operator <code>cl:locally</code>. The scene-graph package shadows <code>cl:locally</code>; the examples assume its exported macro is accessible without a package prefix.</p>
+<p><code>locally</code> combines <a href="03-defining-generative-objects.html#3-4-1">reference chaining</a> with coordinate conversion. It follows the chain to the referenced node and its final coordinate-valued attribute, then transforms that coordinate from the referenced node's frame into the frame of the current <code>self</code>.</p>
 <pre class="code"><code>(let* ((assembly (make-instance 'shaft-support))
        (self assembly))
+  (the main-shaft origin))
+;; =&gt; (VEC3 25.0 0.0 0.0)
+
+(let* ((assembly (make-instance 'shaft-support))
+       (self assembly))
   (locally main-shaft origin))</code></pre>
-<p>Do not assume this produces <code>(VEC3 0.0 0.0 0.0)</code>. That value was observed in a separate interactive example, but the model in §4.4 additionally supplies a nonidentity rotation. Changing the child's orientation changes the coordinate transformation of a nonzero vector, and the result must be assessed for the actual configured assembly.</p>
-<p>The distinction is important even though both expressions mention <code>main-shaft origin</code>. The first performs attribute reference chaining; the second follows that reference and converts the resulting vector from the referenced node's frame into <code>self</code>'s frame. In particular, <code>locally</code> treats the value of the final attribute as a coordinate <em>in the child's frame</em>. Since a node's <code>origin</code> input itself describes a position relative to its parent, care is needed when choosing which frame a coordinate-valued attribute represents. The <code>the</code> example displays the supplied input value; the <code>locally</code> example deliberately does not assert an unverified numeric result. Different coordinate-valued attributes may have different frame conventions.</p>
-<p>In the source, <code>locally</code> obtains the referenced node and its final attribute value, then calls <code>transform-coordinate-from-to</code> with that node as the source and <code>self</code> as the destination. This is why <code>locally</code> is a transformation macro, not merely another spelling of <code>the</code>.</p></section>
+<p>The first form simply reads the shaft's <code>origin</code> input. The second is a coordinate conversion. They are <strong>not interchangeable</strong>, because <code>locally</code> interprets the last attribute's vector in the referenced child's frame, while a node's <code>origin</code> input specifically denotes a position relative to its <em>parent</em>. This distinction is particularly important when rotations are involved. We leave the second form's exact numeric result to runtime verification rather than applying the wrong frame convention.</p>
+<p>For the direct purpose of expressing the shaft's origin in global coordinates, <code>(globally (the main-shaft origin))</code> with <code>self</code> bound to the support is the appropriate introductory example.</p></section>
 <section id="4-6"><h2>4.6 A Small Spatial Assembly</h2>
-<p>We now have all the essential pieces: a spatial node superclass, a component specification, an input-driven offset, a quaternion-defined orientation, and a means of requesting a local point's global coordinate.</p>
-<p>To use the model, instantiate <code>shaft-support</code>, obtain its child using reference chaining, and evaluate a local coordinate with that child bound to <code>self</code>:</p>
-<pre class="code"><code>(let* ((assembly (make-instance 'shaft-support))
-       (shaft-object (send assembly main-shaft))
-       (self shaft-object))
-  (globally (vec3 1 0 0)))</code></pre>
-<p>This shows the roles of both systems: generative reference chaining locates the child object, while the spatial transformation interface relates one coordinate system to another. It deliberately does not depend on predicting a numeric result from unexecuted examples.</p></section>
+<p>The combined example now shows the intended hierarchy of transforms: <code>shaft-support</code> has a rotation, while its <code>main-shaft</code> component has an origin expressed in the support's frame.</p>
+<pre class="code"><code>(let* ((assembly (make-instance 'shaft-support
+                                'rotation
+                                (qrotation (vec3 0 0 1) (/ pi 2))))
+       (self assembly))
+  (globally (the main-shaft origin)))</code></pre>
+<p>The expression follows the shaft component, reads its parent-relative origin, and transforms that coordinate from the support's frame to the global frame. The shaft's own rotation would affect the orientation of its local axes or points away from its origin, but it would not change the location of its origin in the support's frame.</p></section>
 <section id="4-7"><h2>4.7 What Comes Later</h2>
 <p>This chapter introduces spatial organization as an application of generative composition, not as a complete geometry course. Later topics include transformations between any two node frames, the <code>as</code> and <code>locally</code> macros, quaternion operations, geometry defined in local frames, and dependency/invalidation behavior when placements change.</p>
 <p>As in earlier chapters, this is a conceptual progression: the object model and its declarative attribute semantics come first; spatial representation is a powerful but optional capability built on top of them.</p></section>
