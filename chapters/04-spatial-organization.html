@@ -12,7 +12,18 @@
   :attributes
   ((local-coordinate (vec3 100 0 0))))</code></pre>
 <p>Here <code>positioned-shaft</code> inherits spatial behavior from <code>node-mixin</code> while declaring its own <code>length</code> input. The ordinary attribute <code>local-coordinate</code> is a point at <code>(100, 0, 0)</code>, expressed <em>in the shaft's own coordinate system</em>. This is class inheritance, not component composition; an assembly can subsequently contain an instance of this class.</p>
-<p>The implementation also has graphics-related properties, but those are not needed to understand the spatial model.</p></section>
+<p>The implementation also has graphics-related properties, but those are not needed to understand the spatial model.</p>
+<h3 id="4-1-1">4.1.1 Top-Level Nodes and Scene Registration</h3>
+<p>In a running Regen environment, creating a <em>top-level</em> <code>node-mixin</code> instance normally adds it to the default scene graph. If the node has graphical representation, it then appears in the graphics editor. Generative child components are not independently registered as top-level scene nodes.</p>
+<pre class="code"><code>;; Create a top-level node in the default scene:
+(make-instance 'shaft-support)
+
+;; Create a detached node without adding it to the scene graph:
+(make-instance 'shaft-support :scene nil)
+
+;; Equivalent ordinary-symbol initialization argument:
+(make-instance 'shaft-support 'krma::scene nil)</code></pre>
+<p>Both explicit <code>nil</code> forms suppress the side effect of adding the new top-level instance to the scene graph. The <code>:scene</code> and <code>'krma::scene</code> initarg names are distinct Lisp symbols, but this initialization protocol supports both. The instance still exists and can be used for computations without being registered in the displayed scene. A top-level scene node is retained by the scene until removed; being graphical is not a prerequisite for membership.</p></section>
 <section id="4-2"><h2>4.2 Origin: Position in a Parent Frame</h2>
 <p>The <code>origin</code> input gives the position of the child's coordinate-system origin <em>expressed in its parent's coordinate system</em>. The origin of the child's own local coordinate system is always <code>(vec3 0 0 0)</code>; its <code>origin</code> input is not a point expressed in that local frame. In the source, its initial expression is <code>(vec3 0 0 0)</code>. That position is a three-dimensional vector, rather than three unrelated scalar inputs.</p>
 <pre class="code"><code>(defobject positioned-shaft (node-mixin)
