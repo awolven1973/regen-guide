@@ -46,7 +46,8 @@
        (shaft-object (send assembly main-shaft))
        (self shaft-object))
   (globally (the local-coordinate)))</code></pre>
-<p>The <code>globally</code> macro uses <code>self</code> as the source coordinate system. It transforms the shaft's local point using the shaft's own rotation and its offset within the support. If the support is located at the global origin with its default identity orientation, conventional positive 90-degree rotation about Z gives an expected global coordinate of approximately <code>(25, 100, 0)</code>. This numerical result has not yet been confirmed in a running Regen image.</p>
+<p>The <code>globally</code> macro uses <code>self</code> as the source coordinate system. It invokes the scene-graph's coordinate transformation machinery, taking the shaft's placement and rotation into account. Do not infer a numerical answer simply from a conventional matrix convention: the implementation's precise transformation semantics matter. In particular, the current <code>transform-to-global-coordinate</code> method applies <code>inverse-global-matrix</code>. This differs from the forward-matrix reasoning that might otherwise suggest <code>(25, 100, 0)</code>.</p>
+<p><strong>Runtime observation.</strong> In a running RGN-GEO image, an expression with the same structure, but referencing an attribute named <code>random-coord</code>, produced <code>(VEC3 1.6653345369377348e-14 -75.0 0.0)</code> (approximately <code>(0, -75, 0)</code>). Since <code>random-coord</code> has not been established as identical to the <code>local-coordinate</code> declared here, this observation is not a verified result for this example.</p>
 <pre class="code"><code>;; The globally macro expands to:
 (transform-to-global-coordinate (the local-coordinate) self)</code></pre>
 <p>Compare this with the shaft's origin: <code>(the origin)</code>, with <code>self</code> bound to the shaft, still yields its placement relative to the support, <code>(25, 0, 0)</code>. The quarter-turn changes the direction of the shaft's own local X-axis, but not the position of the shaft's origin.</p>
@@ -62,7 +63,7 @@
 (let* ((assembly (make-instance 'shaft-support))
        (self assembly))
   (locally main-shaft local-coordinate))</code></pre>
-<p>The first expression reads the shaft's raw coordinate value, <code>(100, 0, 0)</code>. The second expresses that point in the <em>support's</em> frame, taking account of both the child's origin and its rotation. For the illustrated quarter-turn, the expected coordinate in the support's frame is approximately <code>(25, 100, 0)</code>, subject to verification of the implementation's rotation conventions.</p>
+<p>The first expression reads the shaft's raw coordinate value, <code>(100, 0, 0)</code>. The second requests that point in the <em>support's</em> frame, taking account of the child's origin and rotation. The exact numerical result depends on the transformation implementation and should be verified in the running image rather than inferred from an assumed convention.</p>
 <p>The child's <code>origin</code> attribute is different: it already describes a position in the parent's frame. That is why <code>local-coordinate</code>, explicitly defined in the child's own frame, is the clearer introductory example for both <code>locally</code> and <code>globally</code>.</p></section>
 <section id="4-6"><h2>4.6 A Small Spatial Assembly</h2>
 <p>The complete example has only two spatial objects: an unrotated support and its shaft. The support places the shaft 25 units along X and rotates it 90 degrees about Z. The shaft defines a local point 100 units along its own X-axis.</p>
