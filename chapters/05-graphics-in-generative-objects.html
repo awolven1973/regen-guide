@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="description" content="Regen Guide Chapter 5: graphical generative objects, inherited representations, and shaft-support composition"><title>Chapter 5: Graphics in Generative Objects · Regen Guide</title><link rel="stylesheet" href="../assets/site.css"></head><body>
+<a class="skip" href="#content">Skip to content</a><div class="layout"><aside class="sidebar" aria-label="Guide navigation"><a class="brand" href="../index.html">Regen Guide</a><p class="subtitle">Generative programming with Common Lisp</p><nav class="links"><div class="nav-heading">Contents</div><a href="../index.html">Overview</a><a href="01-generative-objects.html">1 · Generative Objects</a><a href="02-attribute-kinds-and-object-protocols.html">2 · Attribute Kinds and Object Protocols</a><a href="03-defining-generative-objects.html">3 · Defining Generative Objects</a><a href="04-spatial-organization.html">4 · Spatial Organization</a><a href="05-graphics-in-generative-objects.html" aria-current="page">5 · Graphics in Generative Objects</a><a href="../glossary.html">Terminology index</a></nav></aside>
+<main id="content"><header class="eyebrow">Chapter 5 · A visible generative assembly</header><h1>Graphics in Generative Objects</h1>
+<p class="lead">The preceding chapter introduced spatial relationships between generative objects. This chapter continues the same shaft-and-support example, this time using concrete classes that provide graphical representations. The important programming ideas remain inheritance, inputs, components, and declarative relationships.</p>
+<div class="note"><strong>Source and scope.</strong> The definitions of <code>cylinder_b</code> and <code>prism_a</code> belong to <code>regen-geometry</code> and are intentionally not reproduced here. The shaft-and-support definitions below are taken from the running Regen example, and the pictured assembly is a screenshot supplied from that session. Package imports are assumed, as in Chapter 4. Details of the rendering backend are outside the scope of this introductory chapter.</div>
+<nav class="card" aria-label="On this page"><strong>In this chapter</strong><ol class="toc"><li><a href="#5-1">5.1 Graphical Behavior Through Inheritance</a></li><li><a href="#5-2">5.2 Defining a Shaft</a></li><li><a href="#5-3">5.3 Defining Its Support</a></li><li><a href="#5-4">5.4 The Resulting Assembly</a></li><li><a href="#5-5">5.5 Changes Propagate Through Relationships</a></li><li><a href="#5-6">5.6 Looking Ahead</a></li></ol></nav>
+<section id="5-1"><h2>5.1 Graphical Behavior Through Inheritance</h2>
+<p>A generative object need not construct its own graphical representation from scratch. It can inherit from an existing concrete class that already provides one. Here, <code>cylinder_b</code> and <code>prism_a</code> are concrete classes provided by <code>regen-geometry</code>. Their geometric behavior and graphical representations are supplied by that library.</p>
+<p>The <code>cylinder</code> and <code>box</code> concepts can be specified through protocols, with alternative concrete implementations. For this first graphics example we use particular implementations and defer the protocols' full definitions. Both concrete classes provide spatial behavior, so the concepts introduced in <a href="04-spatial-organization.html">Chapter 4</a> still apply.</p>
+<p>At the implementation level, <code>block-mixin</code> extends <code>node-mixin</code> with graphical grouping support. Readers do not need to work with this grouping mechanism to follow the example.</p></section>
+<section id="5-2"><h2>5.2 Defining a Shaft</h2>
+<p>The shaft specializes the existing cylinder implementation and supplies a default radius:</p>
+<pre class="code"><code>(defobject positioned-shaft (cylinder_b)
+  :inputs
+  ((radius 10)))</code></pre>
+<p>No graphical construction commands appear in this definition. The shaft inherits its cylindrical representation and its other cylinder behavior from <code>cylinder_b</code>. It adds one declarative choice: the default <code>radius</code> is 10.</p>
+<p>Notice that the shaft definition does not fix its height. That value will be provided by the containing support object, illustrating how a reusable generative object can receive part of its configuration from its context.</p></section>
+<section id="5-3"><h2>5.3 Defining Its Support</h2>
+<p>The support specializes a concrete prism and contains the shaft as a generative component:</p>
+<pre class="code"><code>(defobject shaft-support (prism_a)
+  :inputs
+  ((shaft-length 100)
+   (width (- (the shaft-length) 10))
+   (length 50)
+   (height 50))
+
+  :components
+  ((main-shaft
+    :type 'positioned-shaft
+    center-on (the centroid)
+    height (the shaft-length)
+    rotation (qrotation (vec3 0 1 0) (/ pi 2)))))</code></pre>
+<p>This definition introduces no new object-construction model. Its <code>:inputs</code> and <code>:components</code> have the same roles they had in earlier chapters. What changes is that the inherited classes know how to present their geometry graphically.</p>
+<p>The support's <code>width</code> depends on <code>shaft-length</code>. For the default values, the shaft length is 100 and the support width is 90. Its other dimensions are each 50.</p>
+<p>The component's provided inputs specify its relationship to the support. <code>height (the shaft-length)</code> makes the cylinder's axial extent equal to the support's shaft-length input. <code>center-on (the centroid)</code> positions the cylinder's geometric center at the support's centroid, with the supplied point expressed in the support's coordinate system. The rotation is a quarter turn about the support's Y-axis, aligning the cylinder's local Z-axis with the support's X direction.</p></section>
+<section id="5-4"><h2>5.4 The Resulting Assembly</h2>
+<p>Instantiating the top-level support in a running Regen session makes it part of the default scene; because it has graphical representation, the assembly appears in the editor:</p>
+<pre class="code"><code>(make-instance 'shaft-support)</code></pre>
+<p>The accompanying screenshot shows the rectangular support in wireframe and the cylindrical shaft extending through its center. The visual arrangement is a direct consequence of the same declarative definitions used to construct the generative object hierarchy.</p>
+<!-- SCREENSHOT_SLOT: In a local bundle, the supplied screenshot is inserted here. -->
+<p>As explained in <a href="04-spatial-organization.html#4-1-1">Section 4.1.1</a>, a top-level node can instead be constructed without scene registration by passing <code>:scene nil</code> or <code>'krma:scene nil</code>.</p></section>
+<section id="5-5"><h2>5.5 Changes Propagate Through Relationships</h2>
+<p>The <code>shaft-length</code> input plays more than one role. It determines the shaft's height through a provided-input expression, and it determines the support's width through another expression. These are relationships in the generative model, rather than independent measurements copied into several objects.</p>
+<p>Similarly, positioning the shaft with <code>center-on</code> avoids embedding a separately computed placement offset in the support's component definition. The cylinder implementation can derive its parent-relative coordinate-system <code>origin</code> using its own local <code>center</code>, dimensions, and rotation.</p>
+<p>For a cylinder whose local origin is the center of its base circle and whose axis extends along positive local Z, its local geometric center is halfway along the cylinder's height. The <code>center-on</code> input specifies where that point should be in the parent's coordinates; it is distinct from the parent-relative <code>origin</code>. The point used to position the part and the local origin need not coincide.</p>
+<p>These relationships explain why the model is <em>generative</em>: the assembly specifies how constituent objects relate, not just what graphical objects to draw once.</p></section>
+<section id="5-6"><h2>5.6 Looking Ahead</h2>
+<p>This example deliberately relies on existing graphical implementations. Later chapters can describe the protocols for common blocks, alternatives for positioning by <code>origin</code> or <code>center-on</code>, and presentation controls such as wireframe and shaded views. Those protocols are still being developed, so the present example should not be taken as their complete specification.</p>
+<p>A further refinement could define protocols for engineering concepts such as a shaft and its support, distinct from the concrete classes used to realize them. For now, the central point is that ordinary generative-object definitions can acquire visible representations through inheritance while retaining the same declarative relationships.</p></section>
+<nav class="bottomnav" aria-label="Chapter navigation"><a href="04-spatial-organization.html">← Chapter 4</a><a href="../glossary.html">Terminology index →</a></nav><footer>Regen Guide · Graphics as an application of generative objects.</footer></main></div></body></html>
