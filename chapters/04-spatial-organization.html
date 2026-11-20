@@ -26,7 +26,7 @@
 <p>The provided-input expression <code>origin (vec3 (the shaft-offset) 0 0)</code> positions the child shaft at an offset determined by the assembly's <code>shaft-offset</code> input. It is another example of <a href="03-defining-generative-objects.html#3-5-1">generative composition</a>: the containing object specifies a relationship that determines the child object's input.</p>
 <p>Here and below the vector constructors and angle expressions are shown in the same general style as the libraries' source; the examples use an assumed package context rather than a complete application initialization sequence.</p></section>
 <section id="4-3"><h2>4.3 Rotation: Orientation with Quaternions</h2>
-<p>Position alone is insufficient for a spatial assembly. The <code>rotation</code> input expresses the orientation of the child's local coordinate system relative to the parent. Its default in <code>node-mixin</code> is the identity quaternion, <code>(quat 0 0 0 1)</code>.</p>
+<p>Coordinate systems can be rotated about their origins. The <code>rotation</code> input expresses the orientation of the child's local coordinate system relative to the parent. Its default in <code>node-mixin</code> is the identity quaternion, <code>(quat 0 0 0 1)</code>.</p>
 <p><code>3dm:qrotation</code> constructs a quaternion from a rotation axis and angle. For example, a quarter-turn about the Z axis can be expressed as:</p>
 <pre class="code"><code>(qrotation (vec3 0 0 1) (/ pi 2))</code></pre>
 <p>The first argument is the axis vector; the second is the rotation angle in radians. The mathematical value <code>(/ pi 2)</code> represents 90 degrees. This example introduces quaternion construction without requiring the reader to manipulate quaternion components directly.</p>
