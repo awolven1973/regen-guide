@@ -81,7 +81,7 @@
 <pre class="code"><code>;; The globally macro expands to:
 (transform-to-global-coordinate (vec3 100 0 0) self)</code></pre>
 <p>The <code>globally</code> macro uses <code>self</code> as its source frame. <code>transform-to-global-coordinate</code> should apply the node's <code>global-matrix</code> to convert a local point into global coordinates; its inverse, <code>transform-from-global-coordinate</code>, should apply <code>inverse-global-matrix</code>. The general <code>transform-coordinate-from-to</code> operation converts coordinates from its specified source frame to its destination frame. The three conversion implementations were corrected before the test above.</p>
-<p>A global coordinate system is not necessarily identical to the root object's local coordinate system; the scene-graph API distinguishes those concepts.</p>
+<p>A global coordinate system is not necessarily identical to the root object's local coordinate system because the root object can override the values of the orientation and positioning attributes with its own definitions.</p>
 <h3 id="4-5-1">4.5.1 Reading an Attribute Versus Transforming Its Coordinate</h3>
 <p><strong>Package note:</strong> Here <code>locally</code> means <code>adhoc-scene-graph:locally</code>, <em>not</em> the Common Lisp special operator <code>cl:locally</code>. The example assumes that the scene-graph macro is imported into the current package.</p>
 <p>For a coordinate-valued attribute in the child's <em>own</em> frame, <code>the</code> simply reads the value, whereas <code>locally</code> converts it into the frame of <code>self</code>. For example, if <code>positioned-shaft</code> also declared <code>(local-coordinate (vec3 100 0 0))</code> under <code>:attributes</code>:</p>
