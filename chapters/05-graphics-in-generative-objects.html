@@ -38,7 +38,7 @@
 <p>Instantiating the top-level support in a running Regen session makes it part of the default scene; because it has graphical representation, the assembly appears in the editor:</p>
 <pre class="code"><code>(make-instance 'shaft-support)</code></pre>
 <p>The accompanying screenshot shows the rectangular support in wireframe and the cylindrical shaft extending through its center. The visual arrangement is a direct consequence of the same declarative definitions used to construct the generative object hierarchy.</p>
-<!-- SCREENSHOT_SLOT: In a local bundle, the supplied screenshot is inserted here. -->
+<figure style="margin:1.5rem 0"><img src="../assets/shaft-support.jpg" alt="Wireframe view of the shaft support and cylindrical shaft in the Regen graphics editor" style="display:block;width:100%;height:auto;border-radius:8px"><figcaption style="font-size:.9rem;color:var(--muted);margin-top:.5rem">Shaft support and positioned shaft displayed in the Regen graphics editor.</figcaption></figure>
 <p>As explained in <a href="04-spatial-organization.html#4-1-1">Section 4.1.1</a>, a top-level node can instead be constructed without scene registration by passing <code>:scene nil</code> or <code>'krma:scene nil</code>.</p></section>
 <section id="5-5"><h2>5.5 Changes Propagate Through Relationships</h2>
 <p>The <code>shaft-length</code> input plays more than one role. It determines the shaft's height through a provided-input expression, and it determines the support's width through another expression. These are relationships in the generative model, rather than independent measurements copied into several objects.</p>
