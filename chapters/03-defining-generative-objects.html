@@ -23,7 +23,7 @@
 
 (let ((plate (make-instance 'rectangular-plate)))
   (send plate length)) ; =&gt; 10</code></pre>
-<p><a href="../glossary.html#input">Inputs</a> establish values from which other properties can be derived. In this form, both input declarations provide expressions supplying initial values. The test suite establishes the same basic pattern with single-letter names and <code>make-instance</code>.</p>
+<p><a href="../glossary.html#input">Inputs</a> establish values from which other properties can be derived. In this form, both input declarations provide expressions supplying initial values.</p>
 <p>These dimensions are intentionally abstract numbers; units, dimensions, and geometric representations are subjects for later chapters.</p></section>
 <section id="3-3"><h2>3.3 Ordinary Attributes and Declarative Computation</h2>
 <p>An <a href="../glossary.html#ordinary-attribute">ordinary attribute</a> can express a computed relationship. Here the plate's area is <em>declared in terms of</em> its dimensions.</p>
