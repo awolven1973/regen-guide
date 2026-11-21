@@ -99,7 +99,7 @@
   (send assembly main-shaft length)) ; =&gt; 150</code></pre>
 <p>The component specification supplies <code>length (the shaft-length)</code>. The expression obtains a value from the assembly and provides it as the <code>length</code> input of <code>main-shaft</code>. Thus the child's length is determined by the containing assembly's specification; it is not merely the shaft class's initial value of <code>100</code>.</p>
 <p>This is the essential distinction: <strong>composition</strong> establishes a part–whole relationship; <strong>generative composition</strong> uses provided-input expressions to establish how attributes of the resulting child are driven by that relationship. The component instance hierarchy and the attribute dependency graph remain different structures.</p>
-<p>Adhoc's tests exercise provided input expressions in component declarations. The special symbol <code>adhoc:part</code>, which denotes the child object in that context, is not needed for this introductory example and will be explained when provided-input evaluation is treated in greater detail.</p></section></section>
+</section></section>
 <section id="3-6"><h2>3.6 Inheritance and Shared Semantics</h2>
 <p>Generative classes also participate in ordinary CLOS inheritance. A derived class can reuse a parent's declared input:</p>
 <pre class="code"><code>(defobject dimensioned-part ()
