@@ -11,6 +11,7 @@ Open [index.html](index.html) locally, or enable GitHub Pages from the repositor
 - [Chapter 2: Attribute Kinds and Object Protocols](chapters/02-attribute-kinds-and-object-protocols.html)
 - [Chapter 3: Defining Generative Objects](chapters/03-defining-generative-objects.html)
 - [Chapter 4: Spatial Organization](chapters/04-spatial-organization.html)
+- [Chapter 5: Graphics in Generative Objects](chapters/05-graphics-in-generative-objects.html)
 - [Terminology index](glossary.html)
 
 The HTML is static and has no dependencies or build steps. Relative links work locally or under a GitHub Pages project path.
@@ -21,19 +22,20 @@ The intended audience already knows Common Lisp. Early chapters develop concepts
 
 Distinguish implemented Regen behavior from prospective features. Parameter/constraint solving and transactional recovery are future topics, **not** claimed as current implementations.
 
-### Planned chapters
+### Chapters and planned progression
 
 1. Generative Objects
 2. Attribute Kinds and Object Protocols
-3. Defining Generative Objects with `defobject` (introductory examples checked against the Adhoc test suite; runtime confirmation pending)
-4. Spatial Organization with `node-mixin` (examples grounded in adhoc-scene-graph and 3d-math; runtime confirmation pending)
-5. Attribute evaluation, explicit assignments, and invalidation
-6. Object composition and dependency graphs
-7. Advanced reference systems and geometry
-8. Consistency, error recovery, and prospective transactions
-9. Protocols and external implementations
-10. Declarative modeling, design intent as a first-class concept, and knowledge-based engineering
-11. Knowledge representation, ontologies, and schemas (distinguishing related concepts without treating them as a strict subset hierarchy)
+3. Defining Generative Objects with `defobject` (introductory examples grounded in Adhoc source patterns)
+4. Spatial Organization with `node-mixin` (examples grounded in adhoc-scene-graph and 3d-math; selected spatial examples verified in a running image)
+5. Graphics in Generative Objects (shaft-and-support example with screenshot)
+6. Attribute evaluation, explicit assignments, and invalidation (planned)
+7. Object composition and dependency graphs (planned)
+8. Advanced reference systems and geometry (planned)
+9. Consistency, error recovery, and prospective transactions (planned)
+10. Protocols and external implementations (planned)
+11. Declarative modeling, design intent as a first-class concept, and knowledge-based engineering (planned)
+12. Knowledge representation, ontologies, and schemas (distinguishing related concepts without treating them as a strict subset hierarchy)
 
 ## Structure
 
