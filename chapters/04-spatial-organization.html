@@ -52,7 +52,7 @@
                rotation (qrotation (vec3 0 0 1) (/ pi 2)))))</code></pre>
 <p>The support itself retains the default identity rotation. The <code>main-shaft</code> component has an origin of <code>(25, 0, 0)</code> in the support's coordinate system, and its own local axes are rotated by the quaternion. A rotation of the shaft about its own origin does not move that origin; it changes the positions of other points defined in the shaft's local frame.</p></section>
 <section id="4-5"><h2>4.5 From Local to Global Coordinates</h2>
-<p>The <code>shaft-support</code> places the child shaft's origin at <code>(25, 0, 0)</code> in the support's frame and rotates its local X-axis 90 degrees about Z. The following was tested in a running RGN-GEO image with the corrected scene-graph coordinate-conversion functions:</p>
+<p>The <code>shaft-support</code> places the child shaft's origin at <code>(25, 0, 0)</code> in the support's frame and rotates its local X-axis 90 degrees about Z. The following was implemented in Regen:</p>
 <pre class="code"><code>(defobject positioned-shaft (node-mixin)
   :inputs
   ((length 100)))
