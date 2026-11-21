@@ -57,7 +57,7 @@
 <p>Compare the expressions with their two-step equivalent:</p>
 <pre class="code"><code>(let ((shaft-object (send assembly main-shaft)))
   (send shaft-object length))</code></pre>
-<p>Chaining avoids naming intermediate objects when all that matters is the property at the end of the path. A longer chain can traverse multiple nested components. Adhoc's tests include expressions such as <code>(send assembly-object child grandchild attribute)</code>, demonstrating that a chain is not limited to two names.</p>
+<p>Chaining avoids naming intermediate objects when all that matters is the property at the end of the path. <code>send</code> can have reference chains of any length such as <code>(send assembly-object child grandchild attribute)</code>, demonstrating that a chain is not limited to two names.</p>
 <h3 id="3-4-2">3.4.2 What a Chain Means</h3>
 <p>Each name in a reference chain is interpreted relative to the object reached by the preceding step. A chain therefore expresses <em>navigation through the generative object model</em>, not a single flat name or a Common Lisp package-qualified symbol. The intermediate steps must yield objects on which the next property can meaningfully be requested.</p>
 <p>Chaining is also different from inheritance. Inheritance determines which attributes an object can possess through its class; reference chaining navigates from one object to another through attribute values, frequently through components. Later chapters will discuss cases in which attributes other than components supply object references.</p>
