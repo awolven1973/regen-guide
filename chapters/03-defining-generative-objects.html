@@ -39,7 +39,7 @@
 <p>The <code>area</code> expression encodes part of the model's <a href="../glossary.html#design-intent">design intent</a>: area is determined by length and width, rather than maintained manually as an unrelated number. The <code>(send plate area)</code>, <code>(the length)</code> and <code>(the width)</code> forms use Adhoc's attribute-reference syntax.</p>
 <p>The expression still executes Common Lisp computation. <a href="../glossary.html#declarative-programming">Declarative programming</a> does not prohibit arithmetic or procedural code; it changes which relationships the programmer is responsible for specifying.</p></section>
 <section id="3-4"><h2>3.4 Reading Generative Attributes and Reference Chaining</h2>
-<p>Adhoc/Regen provides attribute-reference forms for reading the properties of generative objects. The two fundamental forms differ in how the starting object is supplied:</p>
+<p>Regen provides attribute-reference forms for reading the properties of generative objects. The two fundamental forms differ in how the starting object is supplied:</p>
 <pre class="code"><code>(send plate area)
 
 (let ((self plate))
