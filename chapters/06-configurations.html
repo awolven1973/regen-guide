@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="description" content="Regen Guide Chapter 6: dynamic component types, configurations, provided inputs and live graphical regeneration"><title>Chapter 6: Configurations · Regen Guide</title><link rel="stylesheet" href="../assets/site.css"></head><body>
+<a class="skip" href="#content">Skip to content</a><div class="layout"><aside class="sidebar" aria-label="Guide navigation"><a class="brand" href="../index.html">Regen Guide</a><p class="subtitle">Generative programming with Common Lisp</p><nav class="links"><div class="nav-heading">Contents</div><a href="../index.html">Overview</a><a href="01-generative-objects.html">1 · Generative Objects</a><a href="02-attribute-kinds-and-object-protocols.html">2 · Attribute Kinds and Object Protocols</a><a href="03-defining-generative-objects.html">3 · Defining Generative Objects</a><a href="04-spatial-organization.html">4 · Spatial Organization</a><a href="05-graphics-in-generative-objects.html">5 · Graphics in Generative Objects</a><a href="06-configurations.html" aria-current="page">6 · Configurations</a><a href="../glossary.html">Terminology index</a></nav></aside>
+<main id="content"><header class="eyebrow">Chapter 6 · Changing an assembly's composition</header><h1>Configurations</h1>
+<p class="lead">A generative object need not have a fixed composition. The class of one of its components can be determined by an expression, so changing an input can replace one kind of component with another. This chapter develops that capability using the shaft-and-support example from <a href="05-graphics-in-generative-objects.html">Chapter 5</a>.</p>
+<div class="note"><strong>Source and scope.</strong> The definitions below are the working Chapter 6 example. <code>cylinder_b</code>, <code>hollow-cylinder_b</code>, and <code>prism_a</code> are concrete geometry classes; their implementations are not reproduced here. Package imports are assumed, as in the preceding chapters. The example illustrates existing configuration behavior rather than a proposed configuration facility.</div>
+<nav class="card" aria-label="On this page"><strong>In this chapter</strong><ol class="toc"><li><a href="#6-1">6.1 Parameters and Configurations</a></li><li><a href="#6-2">6.2 The Configurable Shaft Support</a></li><li><a href="#6-3">6.3 A Component Type Determined by an Input</a></li><li><a href="#6-4">6.4 Provided Inputs and Child Messages</a></li><li><a href="#6-5">6.5 Symbol Identity and Packages</a></li><li><a href="#6-6">6.6 Live Configuration Changes</a></li><li><a href="#6-7">6.7 What Component Replacement Means</a></li></ol></nav>
+<section id="6-1"><h2>6.1 Parameters and Configurations</h2>
+<p>In the preceding example, changing <code>shaft-length</code> changes numerical dimensions without changing the class of <code>main-shaft</code>. A configuration can go further: it can select a different component class and thereby change the assembly's composition.</p>
+<p>Here, the alternative shaft classes represent a solid cylindrical shaft and a hollow cylindrical shaft. The latter has an opening through its length. The surrounding support remains a <code>shaft-support</code> object; its <code>main-shaft</code> component is generated according to the current configuration.</p>
+<p>These operations are not separate programming languages or construction phases. Numerical parameters and component-type selection are both expressed using ordinary Common Lisp expressions within <code>defobject</code> definitions.</p></section>
+<section id="6-2"><h2>6.2 The Configurable Shaft Support</h2>
+<p>The following is the complete example:</p>
+<pre class="code"><code>(defobject positioned-shaft (cylinder_b)
+  :inputs
+  ((radius :visual 10)
+   (display :visual :shaded)))
+
+(defobject hollow-positioned-shaft (hollow-cylinder_b)
+  :inputs
+  ((radius :visual 10)
+   (thickness :visual 9)
+   (display :visual :shaded)))
+
+(defobject shaft-support (prism_a)
+  :inputs
+  ((shaft-length :visual 100)
+   (shaft-wall-thickness :visual 2)
+   (width :visual (- (the shaft-length) 10))
+   (length 50)
+   (height 50)
+   (hint :visual :grey-elephant))
+
+  :components
+  ((main-shaft
+    :type (if (eq (the hint) :pink-elephant)
+              'hollow-positioned-shaft
+              'positioned-shaft)
+    center-on (the centroid)
+    height (the shaft-length)
+    thickness (the shaft-wall-thickness)
+    rotation (qrotation (vec3 0 1 0) (/ pi 2)))))</code></pre>
+<p><code>positioned-shaft</code> inherits from <code>cylinder_b</code>. <code>hollow-positioned-shaft</code> inherits from <code>hollow-cylinder_b</code> and additionally declares <code>thickness</code>. Both shafts declare a <code>radius</code> input and override <code>display</code> to default to <code>:shaded</code>.</p>
+<p>The support declares <code>shaft-length</code>, <code>shaft-wall-thickness</code>, and a derived <code>width</code> in addition to its other dimensions. Its <code>hint</code> input defaults to <code>:grey-elephant</code>. The intentionally memorable <code>:pink-elephant</code> value selects the alternative shaft class.</p>
+<p>The <code>:visual</code> declarations matter in this graphical example: when a visual input is explicitly changed, Regen can initiate graphical erasure and redrawing even if no cached attribute currently records a dependency on that input. A drawing method may read the input directly. Inputs without <code>:visual</code> do not automatically incur that graphical update path merely because they have changed.</p></section>
+<section id="6-3"><h2>6.3 A Component Type Determined by an Input</h2>
+<p>The defining feature of this configuration is the expression in the <code>main-shaft</code> component:</p>
+<pre class="code"><code>:type (if (eq (the hint) :pink-elephant)
+          'hollow-positioned-shaft
+          'positioned-shaft)</code></pre>
+<p>With the default <code>hint</code>, this expression yields the class name <code>positioned-shaft</code>, and the component is a solid shaft. When <code>hint</code> is <code>:pink-elephant</code>, the expression yields <code>hollow-positioned-shaft</code>. The component's type is not a fixed symbol in the parent definition; it is a computation.</p>
+<p>When the value on which that computation depends changes, Adhoc's dependency machinery invalidates the affected component. On subsequent evaluation the component is generated using the newly selected class. The previous component instance is no longer the component supplied by the parent. This is more than adjusting a dimension: a different generative class, and therefore potentially a different geometry and set of attributes, can occupy the same component position.</p>
+<p>The name <code>main-shaft</code> continues to identify the component in the <em>parent's definition</em>. It does not imply that the same child CLOS instance survives a change of class.</p></section>
+<section id="6-4"><h2>6.4 Provided Inputs and Child Messages</h2>
+<p>The <code>main-shaft</code> declaration provides the same expressions to either selected class:</p>
+<pre class="code"><code>center-on (the centroid)
+height (the shaft-length)
+thickness (the shaft-wall-thickness)
+rotation (qrotation (vec3 0 1 0) (/ pi 2))</code></pre>
+<p>The first two expressions establish the shaft's position and axial length relative to the support. The rotation turns the shaft around the support's Y axis by 90 degrees. The <code>thickness</code> expression refers to the support's <code>shaft-wall-thickness</code> input, rather than to the hollow shaft's declared default thickness of 9.</p>
+<p>Notice that the same provided-input declaration is valid for <em>both</em> component classes. <code>hollow-positioned-shaft</code> declares <code>thickness</code> as an input, so its provided value participates in the normal input and dependency machinery. <code>positioned-shaft</code> does not declare a <code>thickness</code> input, but that does not make the component declaration erroneous.</p>
+<p>Instead, the solid shaft can still answer the supplied <code>thickness</code> message, as in:</p>
+<pre class="code"><code>(send sh-sup main-shaft thickness)</code></pre>
+<p>For this solid shaft, the provided message has no local cache location and cannot be assigned using <code>setf</code>. If the selected child's class instead defines a local ordinary attribute or component named <code>thickness</code>, messaging that name returns the value determined by the child's local definition. Thus an undeclared provided message is not the same thing as a declared, settable input, and a local definition takes precedence over the parent-supplied expression.</p>
+<p>This flexibility allows a parent to describe a common component relationship without branching into separate component declarations for every possible type. It also means the engineer should distinguish carefully between a provided message, a declared child input, and an ordinary attribute or component on the child.</p></section>
+<section id="6-5"><h2>6.5 Symbol Identity and Packages</h2>
+<p>In Common Lisp, component input and message names are symbols. Their package identities are significant. Two symbols with the same printed name are not equal merely because their names have the same characters:</p>
+<pre class="code"><code>rgn-geo::thickness
+my-package::thickness</code></pre>
+<p>These are different symbols. If a component definition inadvertently supplies a name interned in the wrong package, it may still be accepted as a provided message without overriding the intended declared input. The program can therefore appear to run while producing unexpected values.</p>
+<p>When a provided input seems not to take effect, inspect the actual symbols and packages involved in the component definition and the child's slot definitions. Unqualified names in the examples assume that the appropriate symbols have been imported or are accessible in the package in which the definitions are read.</p></section>
+<section id="6-6"><h2>6.6 Live Configuration Changes</h2>
+<p>The same <code>shaft-support</code> instance can be used to explore both configurations. After constructing and displaying an instance, explicitly assign its <code>hint</code> input to select the hollow component:</p>
+<pre class="code"><code>;; Here sh-sup denotes an existing shaft-support instance.
+(setf (slot-value sh-sup 'hint) :pink-elephant)</code></pre>
+<p>The assignment uses the input's normal setting mechanism. Since <code>hint</code> is declared <code>:visual</code>, the change requests a graphical update. The type expression changes, the old solid component is invalidated, and the hollow component can be regenerated and displayed in its place. Assigning <code>:grey-elephant</code> restores the solid-shaft configuration:</p>
+<pre class="code"><code>(setf (slot-value sh-sup 'hint) :grey-elephant)</code></pre>
+<p>In the running graphics environment, this configuration change also has a resource-lifecycle consequence: the old component's retained graphical primitives must be erased before they are replaced. This is handled by the dependency and graphics machinery; the <code>defobject</code> definition itself does not contain commands to delete or draw KRMA primitives.</p>
+<p>The support's other parameters remain part of the surviving parent object. For example, <code>shaft-wall-thickness</code> remains available when switching back to the hollow shaft. The newly selected component obtains its values from the current component declaration rather than by copying cached state from the obsolete child.</p></section>
+<section id="6-7"><h2>6.7 What Component Replacement Means</h2>
+<p>There are three distinct identities to keep in mind. The parent <code>shaft-support</code> instance remains the same. The component designation <code>main-shaft</code> remains the same within that parent's definition. But the child instance occupying that position may be replaced when the configuration changes.</p>
+<p>Consequently, it would be misleading to say that the existing cylinder object simply <em>becomes</em> an instance of <code>hollow-positioned-shaft</code>. The parent determines which class to instantiate, and the dependency system maintains the resulting component hierarchy.</p>
+<p>The same principle extends beyond the solid-versus-hollow choice illustrated here: a component type expression may depend on other inputs or computed relationships. More advanced configurations can involve aggregate component sizes and keys, but those mechanisms are deferred until the aggregate-component chapter.</p>
+<p>The central lesson is that <strong>an assembly's composition can itself be generative</strong>. Regen expresses both the relationships among components and the choice of which components exist, while the live graphical environment reflects changes to that generative model.</p></section>
+<nav class="bottomnav" aria-label="Chapter navigation"><a href="05-graphics-in-generative-objects.html">← Chapter 5</a><a href="../glossary.html">Terminology index →</a></nav><footer>Regen Guide · Configuration through generative component types.</footer></main></div></body></html>
