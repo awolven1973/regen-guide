@@ -75,6 +75,10 @@ my-package::thickness</code></pre>
 (setf (slot-value sh-sup 'hint) :pink-elephant)</code></pre>
 <p>The assignment uses the input's normal setting mechanism. Since <code>hint</code> is declared <code>:visual</code>, the change requests a graphical update. The type expression changes, the old solid component is invalidated, and the hollow component can be regenerated and displayed in its place. Assigning <code>:grey-elephant</code> restores the solid-shaft configuration:</p>
 <pre class="code"><code>(setf (slot-value sh-sup 'hint) :grey-elephant)</code></pre>
+<div class="grid" aria-label="Shaft-support configuration screenshots" style="margin:1.5rem 0">
+<figure style="margin:0"><img src="../assets/shaft-support-configuration-1.jpg" alt="First shaft-support configuration screenshot" loading="lazy" style="display:block;width:100%;height:auto;border-radius:8px"><figcaption style="font-size:.9rem;color:var(--muted);margin-top:.5rem">Shaft-support configuration 1.</figcaption></figure>
+<figure style="margin:0"><img src="../assets/shaft-support-pink-elephant.jpg" alt="Shaft-support screenshot for the pink-elephant configuration" loading="lazy" style="display:block;width:100%;height:auto;border-radius:8px"><figcaption style="font-size:.9rem;color:var(--muted);margin-top:.5rem">The <code>:pink-elephant</code> configuration.</figcaption></figure>
+</div>
 <p>In the running graphics environment, this configuration change also has a resource-lifecycle consequence: the old component's retained graphical primitives must be erased before they are replaced. This is handled by the dependency and graphics machinery; the <code>defobject</code> definition itself does not contain commands to delete or draw KRMA primitives.</p>
 <p>The support's other parameters remain part of the surviving parent object. For example, <code>shaft-wall-thickness</code> remains available when switching back to the hollow shaft. The newly selected component obtains its values from the current component declaration rather than by copying cached state from the obsolete child.</p></section>
 <section id="6-7"><h2>6.7 What Component Replacement Means</h2>
