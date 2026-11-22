@@ -12,6 +12,7 @@ Open [index.html](index.html) locally, or enable GitHub Pages from the repositor
 - [Chapter 3: Defining Generative Objects](chapters/03-defining-generative-objects.html)
 - [Chapter 4: Spatial Organization](chapters/04-spatial-organization.html)
 - [Chapter 5: Graphics in Generative Objects](chapters/05-graphics-in-generative-objects.html)
+- [Chapter 6: Configurations](chapters/06-configurations.html)
 - [Terminology index](glossary.html)
 
 The HTML is static and has no dependencies or build steps. Relative links work locally or under a GitHub Pages project path.
@@ -29,13 +30,14 @@ Distinguish implemented Regen behavior from prospective features. Parameter/cons
 3. Defining Generative Objects with `defobject` (introductory examples grounded in Adhoc source patterns)
 4. Spatial Organization with `node-mixin` (examples grounded in adhoc-scene-graph and 3d-math; selected spatial examples verified in a running image)
 5. Graphics in Generative Objects (shaft-and-support example with screenshot)
-6. Attribute evaluation, explicit assignments, and invalidation (planned)
-7. Object composition and dependency graphs (planned)
-8. Advanced reference systems and geometry (planned)
-9. Consistency, error recovery, and prospective transactions (planned)
-10. Protocols and external implementations (planned)
-11. Declarative modeling, design intent as a first-class concept, and knowledge-based engineering (planned)
-12. Knowledge representation, ontologies, and schemas (distinguishing related concepts without treating them as a strict subset hierarchy)
+6. Configurations (dynamic component types; solid and hollow shaft example)
+7. Attribute evaluation, explicit assignments, and invalidation (planned)
+8. Object composition and dependency graphs (planned)
+9. Advanced reference systems and geometry (planned)
+10. Consistency, error recovery, and prospective transactions (planned)
+11. Protocols and external implementations (planned)
+12. Declarative modeling, design intent as a first-class concept, and knowledge-based engineering (planned)
+13. Knowledge representation, ontologies, and schemas (distinguishing related concepts without treating them as a strict subset hierarchy)
 
 ## Structure
 
